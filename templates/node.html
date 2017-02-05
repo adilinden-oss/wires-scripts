@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0">
+    <meta http-equiv="refresh" content="60">
+    <meta http-equiv="pragma" content="no-cache">
+    <title>{{nodeid}} ({{nodeno}}) Status</title>
+</head>
+<body>
+    <h2>{{nodeid}} ({{nodeno}}) Status</h2>
+    <p>
+        Connected to: <b>{{nodeconnect}}<!-- {{nodeconnectid}} ({{nodeconnectno}}) --></b><br>
+        List of nodes:<br><b>{{nodelist}}</b>
+    </p>
+
+    <h3>Last heard on frequency:</h3>
+{{userair_trim}}
+    <br>(<a href="heard.html#air">More...</a>)
+
+    <h3>Last heard on Wires-X:</h3>
+{{usernet_trim}}
+    <br>(<a href="heard.html#net">More...</a>)
+
+    <h3>Nodelog (excerpt):</h3>
+{{nodelog_trim}}
+    <br>(<a href="nodelog.html">More...</a>)
+
+    <p>
+        <em>Updated on {{now}}</em>
+    </p>
+</body
+</html>
