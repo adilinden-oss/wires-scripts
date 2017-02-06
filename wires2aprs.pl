@@ -1,59 +1,106 @@
 #!/usr/bin/perl
 #
+# Copyright 2017 Adi Linden <adi@adis.ca>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Notes:
+# ======
+#
 # To install on Windows:
 #
 # Install Strawberry perl available at:
 #   http://strawberryperl.com
 #
 # Install modules needed for this script
-#   C:\> cpanm install Ham::APRS::IS
-#
-# Create batch file to run this script.  Batch file needs fill path to perl
-# interpreter and full path to this script.  Something like:
-#   c:\Strawberry\perl\bin\perl.exe c:%HOMEPATH%\Documents\wires2aprs\wires2aprs.pl
-#
-# Create a task in task scheduler
-#   Open task scheduler via Start Menu
-#     Select Action > Create Basic Task...
-#       Name: Wires-X to APRS
-#       Trigger: Daily
-#       Accept default time
-#       Start a Program
-#       Select our batch file
-#       Check: Open Properties dialog for this task...
-#       Finish
-#     Select Trigger tab
-#       Edit trigger
-#         Repeat task every 3 minutes, Indefinitely
-#         Enable
-#
-# Just a note for future implementations, WiresWeb.dll is a plugin that enables access to
-# Log via web interface.  To access the webinterface with password:
-#   http://localhost:46190/?wipassword=jones
-#
-# Enabling the web interface:
-#
-#    Tool(T) > Plugin set
-#      AddModule
-#        WiresWeb.dll
-#
-#    Tool(T) > WIRES WebServer
-#      Access password    :    jones
-#      Port No.           :    46190
-#      Remote Control     :    check
-#
-#    Now accessible via 
-#      http://localhost:46190/?wipassword=jones
+#   C:\> cpanm install HTTP::Tiny
+#   C:\> cpanm install Config::Tiny
 #
 
 use strict;
 use warnings;
 
 use Time::Local;
+use Config::Tiny;
+use Getopt::Std;
 use Ham::APRS::IS;
 
-# Global debug switch
-my $debug = 1;
+##
+## Global Variables
+##
+
+# Script information
+my %script = (
+    wiresx      => '1.120',
+    name        => 'wires2aprs.pl',
+    version     => '0.9',
+    author      => 'Adi Linden <adi@adis.ca>',
+    license     => 'GPLv3 <http://www.gnu.org/licenses/>',
+    github      => 'https://github.com/adilinden/wires-scripts/',
+);
+
+# Callsign filter
+my %filter;
+
+# Running configuration
+my %cfg;
+
+# Default configuration
+my %cfg_default = (
+    aprsis      => {
+        callsign    => 'N0CALL-YS',
+        password    => '12345',
+    },
+    wiresx      => {
+        accesslog   => "%HOMEPATH%/Documents/WIRESXA/AccHistory/WiresAccess.log",
+    },
+);
+
+# Script defaults (overridden by command line args)
+my $debug       = "0";
+my $quiet       = "0";
+my $oneshot     = "0";
+my $interval    = "60";
+my $cfgfile     = "wires2aprs.cfg";
+
+##
+## Main Script
+##
+
+# Process command line args
+my %args;
+unless (getopts('dqoi:c:shv', \%args)) {
+    do_log(1, "Error", "getopts", "Unknown option");
+    exit;
+}
+
+$debug = 1 if defined $args{d};
+$quiet = 1 if defined $args{q};
+$oneshot = 1 if defined $args{o};
+$interval = $args{i} if defined $args{i};
+$cfgfile = $args{c} if defined $args{c};
+sample() if defined $args{s};
+usage() if defined $args{h};
+version() if defined $args{v};
+
+if ($debug) {
+    use Data::Dumper;
+}
+
+
+exit;
+# End of new
 
 # Call to symbol table
 #
@@ -253,3 +300,106 @@ sub three_wide {
     # 3 wide
     return sprintf("%03d", $in);
 }
+
+# New functions
+
+sub do_log {
+    my ($l, $f, $m, $v) = @_;
+
+    # Log levels
+    #
+    # 1 - Error
+    # 2 - Inform
+    # 3 - Debug
+
+    return if ($quiet and $l > 1);
+    return if (! $debug and $l > 2);
+
+    print "${f}: " if defined $f and length $f;
+    print "${m}: " if defined $m and length $m;
+    print "${v} " if defined $v and length $v;
+    print "\n";
+}
+
+sub usage {
+    print "\nUsage: $script{name} [-dhoqsv] [-c configfile] [-i seconds]\n";
+    print "  -c file          configuration file\n";
+    print "  -d               debug information\n";
+    print "  -h               display usage\n";
+    print "  -o               one-shot run only once\n";
+    print "  -q               quiet, suppress all output\n";
+    print "  -s               display default configuration\n";
+    print "  -v               display version\n";
+    print "  -i seconds       interval in seconds to run\n\n";
+    print "Supports:  Wires-X $script{wiresx}\n";
+    print "Version:   $script{version}\n";
+    print "Author:    $script{author}\n";
+    print "License:   $script{license}\n";
+    print "Github:    $script{github}\n\n";
+    exit;
+}
+
+sub version {
+    print "$script{version}\n";
+    exit;
+}
+
+sub sample {
+    print qq{#
+# The sample configuration file for wires2aprs.pl
+#
+
+#
+# The following path substutions are supported:
+#
+# %HOMEPATH%    current users home directory
+#
+
+# Wires webserver access
+[wiresx]
+accesslog   = $cfg_default{wiresx}{accesslog}
+
+# APRS-IS login
+[aprsis]
+callsign    = $cfg_default{aprsis}{callsign}
+password    = $cfg_default{aprsis}{password}
+
+# Call signs that we filter
+#
+# See symbol table
+# http://wa8lmf.net/miscinfo/APRSsymbolcodes.txt
+# http://wa8lmf.net/aprs/APRS_symbols.htm
+#
+# overlay = which overlay of symbols to use, should be either / or \
+# symbol  = symbol to use from symbol table
+#
+# Coordinates can be entered.  This is useful for stations that do not
+# transmit coordinates, such as the FTM-3200, and are
+# fixed stations.
+#
+[N0CALL-0]
+iscall      = yes
+overlay     = /
+symbol      = -
+latitude    = 43.806111
+longitude   = -81.273889
+
+[N0CALL-7]
+iscall      = yes
+overlay     = /
+symbol      = [
+
+[N0CALL-9]
+iscall      = yes
+overlay     = /
+symbol      = >
+
+[N0CALL-14]
+iscall      = yes
+overlay     = /
+symbol      = k
+};
+    exit;
+}
+
+# End
