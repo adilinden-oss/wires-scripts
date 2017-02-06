@@ -25,6 +25,7 @@
 #
 # Install modules needed for this script
 #   C:\> cpanm install HTTP::Tiny
+#   C:\> cpanm install Config::Tiny
 #
 # Enabling the web interface:
 #
@@ -45,56 +46,24 @@ use strict;
 use warnings;
 
 use HTTP::Tiny;
+use Config::Tiny;
 use Getopt::Std;
+use File::HomeDir;
 use Net::FTP;
-
-##
-## User Settings
-##
-
-# Wires webserver access
-my $wires_pwd       = "jones";
-my $wires_host      = "127.0.0.1";
-my $wires_port      = "46190";
-
-# WiresAccess.log
-my $wires_log       = "$ENV{HOMEPATH}/Documents/WIRESXA/AccHistory/WiresAccess.log";
-
-# Node location
-# Needs to be degree decimal
-#my $node_lat = 43 + 48 / 60 + 22 / 3600;
-#my $node_lon = 0 - ( 81 + 16 / 60 + 26 / 3600 );
-my $node_lat = 43.806111;
-my $node_lon = -81.273889;
-
-# FTP target
-my $ftp_pwd         = "topsecretpassword";
-my $ftp_user        = "n0call";
-my $ftp_host        = "ftp.qsl.net";
-
-# HTML and text templates
-my $trim_length     = 6;
-my $templatedir     = "templates";
 
 ##
 ## Global Variables
 ##
 
-# Wires-X version(s) supported
-my $wiresver    = "1.120";
-
 # Script information
-my $script      = 'wires2html.pl';
-my $version     = '1.0';        
-my $author      = 'Adi Linden <adi@adis.ca>';
-my $license     = 'GPLv3 <http://www.gnu.org/licenses/>';
-my $github      = 'https://github.com/adilinden/wires-scripts/';
-
-# Script defaults (overridden by command line args)
-my $debug       = "0";
-my $quiet       = "0";
-my $oneshot     = "0";
-my $interval    = "60";
+my %script = (
+    wiresx      => '1.120',
+    name        => 'wires2html.pl',
+    version     => '1.1',
+    author      => 'Adi Linden <adi@adis.ca>',
+    license     => 'GPLv3 <http://www.gnu.org/licenses/>',
+    github      => 'https://github.com/adilinden/wires-scripts/',
+);
 
 # Template variables kept in hash
 #
@@ -130,6 +99,39 @@ my $interval    = "60";
 # github            - script repository
 my %template;
 
+# Running configuration
+my %cfg;
+
+# Default configuration
+my %cfg_default = (
+    wiresx      => {
+        host        => '127.0.0.1',
+        port        => '46190',
+        password    => 'jones',
+        accesslog   => "%HOMEPATH%/Documents/WIRESXA/AccHistory/WiresAccess.log",
+    },
+    node        => {
+        latitude    => '43.806111',
+        longitude   => '-81.273889',
+    },
+    ftp         => {
+        host        => 'ftp.qsl.net',
+        username    => 'n0call',
+        password    => 'topsecretpassword',
+    },
+    html        => {
+        trim        => '6',
+        dir         => 'templates',
+    },
+);
+
+# Script defaults (overridden by command line args)
+my $debug       = "0";
+my $quiet       = "0";
+my $oneshot     = "0";
+my $interval    = "60";
+my $cfgfile     = "wires2html.cfg";
+
 # Requried for distance calculation
 my $pi = atan2(1,1) * 4;
 
@@ -139,12 +141,17 @@ my $pi = atan2(1,1) * 4;
 
 # Process command line args
 my %args;
-getopts('dqoi:hv', \%args);
+unless (getopts('dqoi:c:shv', \%args)) {
+    do_log(1, "Error", "getopts", "Unknown option");
+    exit;
+}
 
 $debug = 1 if defined $args{d};
 $quiet = 1 if defined $args{q};
 $oneshot = 1 if defined $args{o};
 $interval = $args{i} if defined $args{i};
+$cfgfile = $args{c} if defined $args{c};
+sample() if defined $args{s};
 usage() if defined $args{h};
 version() if defined $args{v};
 
@@ -152,6 +159,10 @@ if ($debug) {
     use Data::Dumper;
 }
 
+# Handle configuration file
+handle_config();
+
+# The main loop which runs forever unless 'oneshot' specified
 while (1) {
 
     my $fail = 0;
@@ -180,11 +191,11 @@ while (1) {
         roomlog_full        => "",
         roomlog_trim        => "",
         now                 => scalar localtime(),
-        script              => $script,
-        version             => $version,
-        author              => $author,
-        license             => $license,
-        github              => $github,
+        script              => $script{name},
+        version             => $script{version},
+        author              => $script{author},
+        license             => $script{license},
+        github              => $script{github},
    );
 
     # Handle WiresAccess.log
@@ -231,9 +242,10 @@ sub handle_wireslog {
 
     # Open, parse, close log
     my @log;
+    my $accesslog = replace_path_variables($cfg{wiresx}{accesslog});
     my $fh;
-    if (! open($fh, "<:encoding(UTF-8)", $wires_log)) {
-        do_log(1, $func, "", "Could not open file '$wires_log' $!");
+    if (! open($fh, "<:encoding(UTF-8)", $accesslog)) {
+        do_log(1, $func, "", "Could not open file '$accesslog' $!");
         return;
     }
     while (<$fh>) {
@@ -260,7 +272,7 @@ sub handle_wireslog {
 
             # Get distance (in km)
             if ($lat and $lon) {
-                $dist = sprintf("%.2f", distance($node_lat, $node_lon, $lat, $lon, "K"));
+                $dist = sprintf("%.2f", distance($cfg{node}{latitude}, $cfg{node}{longitude}, $lat, $lon, "K"));
             }
         }
 
@@ -273,17 +285,17 @@ sub handle_wireslog {
         # Distance
         my $user_row = make_user_row( $log[$i][3], $log[$i][0], $lat, $lon, $dist, $i);
         $template{userall_full} .= $user_row;
-        $template{userall_trim} .= $user_row if ($i < $trim_length);
+        $template{userall_trim} .= $user_row if ($i < $cfg{html}{trim});
 
         if ($log[$i][4] eq "V-CH") {
             $template{userair_full} .= $user_row;
-            $template{userair_trim} .= $user_row if ($ai < $trim_length);
+            $template{userair_trim} .= $user_row if ($ai < $cfg{html}{trim});
             $ai++;
         }
 
         if ($log[$i][4] eq "Net") {
             $template{usernet_full} .= $user_row;
-            $template{usernet_trim} .= $user_row if ($ni < $trim_length);
+            $template{usernet_trim} .= $user_row if ($ni < $cfg{html}{trim});
             $ni++;
         }
 
@@ -305,13 +317,22 @@ sub make_user_row {
     return $row;
 }
 
+sub replace_path_variables {
+    my ($path) = @_;
+
+    my $home = File::HomeDir->my_home;
+    $path =~ s!%HOMEPATH%!$home!g;
+
+    return $path;
+}
+
 sub handle_roomlog {
     my $func = "handle_roomlog";
     do_log(2, $func);
 
     # Get http content
     my $get = http_get(
-        "http://${wires_host}:${wires_port}/roomlog.html?wipassword=${wires_pwd}");
+        "http://${cfg{wiresx}{host}}:${cfg{wiresx}{port}}/roomlog.html?wipassword=${cfg{wiresx}{password}}");
 
     if (! $get) {
         do_log(1, $func, "", "HTTP GET failed");
@@ -357,7 +378,7 @@ sub handle_roomlog {
         my $i = 0;
         for my $line (reverse split(/\n/m, $log)) {
             $template{roomlog_full} .= make_log_row($line, $i);
-            $template{roomlog_trim} .= make_log_row($line, $i) if ($i < $trim_length);
+            $template{roomlog_trim} .= make_log_row($line, $i) if ($i < $cfg{html}{trim});
             $i++;
         }
     }
@@ -376,7 +397,7 @@ sub handle_nodelog {
 
     # Get http content
     my $get = http_get(
-        "http://${wires_host}:${wires_port}/nodelog.html?wipassword=${wires_pwd}");
+        "http://${cfg{wiresx}{host}}:${cfg{wiresx}{port}}/nodelog.html?wipassword=${cfg{wiresx}{password}}");
 
     if (! $get) {
         do_log(1, $func, "", "HTTP GET failed");
@@ -456,7 +477,7 @@ sub handle_nodelog {
         my $i = 0;
         for my $line (reverse split(/\n/m, $log)) {
             $template{nodelog_full} .= make_log_row($line, $i);
-            $template{nodelog_trim} .= make_log_row($line, $i) if ($i < $trim_length);
+            $template{nodelog_trim} .= make_log_row($line, $i) if ($i < $cfg{html}{trim});
             $i++;
         }
     }
@@ -522,11 +543,11 @@ sub read_dir {
     my ($ftp) = @_;
 
     my $func = "read_dir";
-    do_log(2, $func, '', $templatedir);
+    do_log(2, $func, '', $cfg{html}{dir});
 
     my $dh;
-    if (! opendir($dh, $templatedir)) {
-        do_log(1, $func, "opendir", "Could not open '$templatedir' $!");
+    if (! opendir($dh, $cfg{html}{dir})) {
+        do_log(1, $func, "opendir", "Could not open '$cfg{html}{dir}' $!");
         return;
     }
     while (my $file = readdir $dh) {
@@ -535,7 +556,7 @@ sub read_dir {
 
         # Process file
         my $gut;
-        read_file("$templatedir/$file", \$gut);
+        read_file("$cfg{html}{dir}/$file", \$gut);
 
         # Send file to FTP server
         ftp_put($ftp, "$file", \$gut);
@@ -569,17 +590,17 @@ sub read_file {
 
 sub ftp_open {
     my $func = "ftp_open";
-    do_log(2, $func, "hostname", $ftp_host);
-    do_log(3, $func, "username", $ftp_user);
+    do_log(2, $func, "hostname", $cfg{ftp}{host});
+    do_log(3, $func, "username", $cfg{ftp}{username});
 
     # Connect to FTP server
-    my $ftp = Net::FTP->new($ftp_host, timeout => 5);
+    my $ftp = Net::FTP->new($cfg{ftp}{host}, timeout => 5);
     if (! $ftp) {
-        do_log(1, $func, "Can't open $ftp_host");
+        do_log(1, $func, "Can't open $cfg{ftp}{host}");
         return;
     }
-    if (! $ftp->login($ftp_user, $ftp_pwd)){
-        do_log(1, $func, "Can't login as $ftp_user");
+    if (! $ftp->login($cfg{ftp}{username}, $cfg{ftp}{password})){
+        do_log(1, $func, "Can't login as $cfg{ftp}{username}");
         return;
     }
     return $ftp;
@@ -688,24 +709,56 @@ sub convert_coordinates {
     return($lat, $lon);
 }
 
-sub usage {
-    print "\nUsage: wires2html.pl [-dhov] [-i seconds]\n";
-    print "  -h               display usage\n";
-    print "  -d               debug information\n";
-    print "  -o               one-shot run only once\n";
-    print "  -q               quiet, suppress all output\n";
-    print "  -v               version\n";
-    print "  -i seconds       interval in seconds to run\n\n";
-    print "Supports:  Wires-X $wiresver\n";
-    print "Version:   $version\n";
-    print "Author:    $author\n";
-    print "License:   $license\n\n";
-    exit;
+sub handle_config {
+    my $func = "handle_config";
+    do_log(2, $func, "file", $cfgfile);
+
+    # Read main configuration file
+    my $cfg_read = Config::Tiny->new;
+    $cfg_read = Config::Tiny->read($cfgfile);
+    unless ($cfg_read) {
+        do_log(1, $func, "Error", "Cannot open: $cfgfile");
+        do_log(1, $func, "Hint", " Run with '-s' to dump sample config");
+        exit;
+    }
+
+    # Load %cfg hash with default values
+    %cfg = %cfg_default;
+
+    # Apply config file values
+    config_loop(\%cfg_default, $cfg_read, \%cfg);
+
+    # Dump config variables on startup
+    config_dump(\%cfg);
 }
 
-sub version {
-    print "$version\n";
-    exit;
+sub config_loop {
+    my ($defref, $srcref, $dstref) = @_;
+
+    # Loop through %def(ault) hash as it holds default values and defines all
+    # valid config option. Copy %s(o)rc(e) value to %d(e)st(ination) value if 
+    # exists, otherwise populate with %defref value.
+    #
+    # In essence, any existing source values oaverwrite destination values.
+    for my $k1 (keys %$defref) {
+        for my $k2 (keys $defref->{$k1}) {
+            $dstref->{$k1}->{$k2} = $srcref->{$k1}->{$k2} if ($srcref->{$k1}->{$k2});
+        }
+    }
+}
+
+sub config_dump {
+    my ($ref) = @_;
+    my $func = "config_dump";
+
+    do_log(2, $func, "", " ");
+    for my $k1 (keys %$ref) {
+        do_log(2, $func, "", "[$k1]");
+        for my $k2 (keys $ref->{$k1}) {
+            do_log(2, $func, "", "$k2 = $ref->{$k1}->{$k2}");
+        }
+        do_log(2, $func, "", " ");
+    }
 }
 
 sub trim {
@@ -730,6 +783,85 @@ sub do_log {
     print "${m}: " if defined $m and length $m;
     print "${v} " if defined $v and length $v;
     print "\n";
+}
+
+sub usage {
+    print "\nUsage: wires2html.pl [-dhov] [-i seconds]\n";
+    print "  -c file          configuration file\n";
+    print "  -d               debug information\n";
+    print "  -h               display usage\n";
+    print "  -o               one-shot run only once\n";
+    print "  -q               quiet, suppress all output\n";
+    print "  -s               display default configuration\n";
+    print "  -v               display version\n";
+    print "  -i seconds       interval in seconds to run\n\n";
+    print "Supports:  Wires-X $script{wiresx}\n";
+    print "Version:   $script{version}\n";
+    print "Author:    $script{author}\n";
+    print "License:   $script{license}\n";
+    print "Github:    $script{github}\n\n";
+    exit;
+}
+
+sub version {
+    print "$script{version}\n";
+    exit;
+}
+
+sub sample {
+    print qq{#
+# The sample configuration file for wires2html.pl
+#
+
+#
+# Enabling the Wires-X web interface:
+#
+#    Tool(T) > Plugin set
+#      AddModule
+#        WiresWeb.dll
+#
+#    Tool(T) > WIRES WebServer
+#      Access password    :    jones
+#      Port No.           :    46190
+#      Remote Control     :    check
+#
+#    Now accessible via 
+#      http://127.0.0.1:46190/?wipassword=jones
+#
+# The following path substutions are supported:
+#
+# %HOMEPATH%    current users home directory
+#
+
+# Wires webserver access
+[wiresx]
+host        = $cfg_default{wiresx}{host}
+port        = $cfg_default{wiresx}{port}
+password    = $cfg_default{wiresx}{password}
+accesslog   = $cfg_default{wiresx}{accesslog}
+
+# Node location
+#
+# For now manually configured and not pulled web interface (yet)
+#
+[node]
+latitude    = $cfg_default{node}{latitude}
+longitude   = $cfg_default{node}{longitude}
+
+# FTP target
+[ftp]
+host        = $cfg_default{ftp}{host}
+username    = $cfg_default{ftp}{username}
+password    = $cfg_default{ftp}{password}
+
+# HTML and text templates
+#
+# Defines the 
+[html]
+trim        = $cfg_default{html}{trim}
+dir         = $cfg_default{html}{dir}
+
+}
 }
 
 ##
