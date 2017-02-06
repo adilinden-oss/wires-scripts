@@ -741,7 +741,7 @@ sub config_loop {
     #
     # In essence, any existing source values oaverwrite destination values.
     for my $k1 (keys %$defref) {
-        for my $k2 (keys $defref->{$k1}) {
+        for my $k2 (keys %{$defref->{$k1}}) {
             $dstref->{$k1}->{$k2} = $srcref->{$k1}->{$k2} if ($srcref->{$k1}->{$k2});
         }
     }
@@ -754,7 +754,7 @@ sub config_dump {
     do_log(2, $func, "", " ");
     for my $k1 (keys %$ref) {
         do_log(2, $func, "", "[$k1]");
-        for my $k2 (keys $ref->{$k1}) {
+        for my $k2 (keys %{$ref->{$k1}}) {
             do_log(2, $func, "", "$k2 = $ref->{$k1}->{$k2}");
         }
         do_log(2, $func, "", " ");
@@ -860,8 +860,8 @@ password    = $cfg_default{ftp}{password}
 [html]
 trim        = $cfg_default{html}{trim}
 dir         = $cfg_default{html}{dir}
-
-}
+};
+    exit;
 }
 
 ##
