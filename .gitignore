@@ -1,0 +1,5 @@
+# .gitignore
+
+WiresAccess.log
+wires2html.cfg
+wires2aprs.cfg
