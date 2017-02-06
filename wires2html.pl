@@ -786,7 +786,7 @@ sub do_log {
 }
 
 sub usage {
-    print "\nUsage: wires2html.pl [-dhov] [-i seconds]\n";
+    print "\nUsage: $script{version} [-dhoqsv] [-c configfile] [-i seconds]\n";
     print "  -c file          configuration file\n";
     print "  -d               debug information\n";
     print "  -h               display usage\n";
