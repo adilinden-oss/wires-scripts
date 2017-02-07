@@ -99,11 +99,8 @@ my %script = (
 # github            - script repository
 my %template;
 
-# Running configuration
-my %cfg;
-
-# Default configuration
-my %cfg_default = (
+# Configuration (with default values)
+my %cfg = (
     wiresx      => {
         host        => '127.0.0.1',
         port        => '46190',
@@ -714,34 +711,28 @@ sub handle_config {
     do_log(2, $func, "file", $cfgfile);
 
     # Read main configuration file
-    my $cfg_read = Config::Tiny->new;
-    $cfg_read = Config::Tiny->read($cfgfile);
-    unless ($cfg_read) {
+    my $co = Config::Tiny->new;
+    $co = Config::Tiny->read($cfgfile);
+    unless ($co) {
         do_log(1, $func, "Error", "Cannot open: $cfgfile");
         do_log(1, $func, "Hint", " Run with '-s' to dump sample config");
         exit;
     }
 
-    # Load %cfg hash with default values
-    %cfg = %cfg_default;
-
     # Apply config file values
-    config_loop(\%cfg_default, $cfg_read, \%cfg);
+    config_loop($co, \%cfg);
 
     # Dump config variables on startup
     config_dump(\%cfg);
 }
 
 sub config_loop {
-    my ($defref, $srcref, $dstref) = @_;
+    my ($srcref, $dstref) = @_;
 
-    # Loop through %def(ault) hash as it holds default values and defines all
-    # valid config option. Copy %s(o)rc(e) value to %d(e)st(ination) value if 
-    # exists, otherwise populate with %defref value.
-    #
-    # In essence, any existing source values oaverwrite destination values.
-    for my $k1 (keys %$defref) {
-        for my $k2 (keys %{$defref->{$k1}}) {
+    # Replace values in %d(e)st(ination) with values from %s(o)rc(e).  This
+    # assumes %d(e)st(ination) already has all values defined with defaults.
+    for my $k1 (keys %$dstref) {
+        for my $k2 (keys %{$dstref->{$k1}}) {
             $dstref->{$k1}->{$k2} = $srcref->{$k1}->{$k2} if ($srcref->{$k1}->{$k2});
         }
     }
@@ -835,31 +826,31 @@ sub sample {
 
 # Wires webserver access
 [wiresx]
-host        = $cfg_default{wiresx}{host}
-port        = $cfg_default{wiresx}{port}
-password    = $cfg_default{wiresx}{password}
-accesslog   = $cfg_default{wiresx}{accesslog}
+host        = $cfg{wiresx}{host}
+port        = $cfg{wiresx}{port}
+password    = $cfg{wiresx}{password}
+accesslog   = $cfg{wiresx}{accesslog}
 
 # Node location
 #
 # For now manually configured and not pulled web interface (yet)
 #
 [node]
-latitude    = $cfg_default{node}{latitude}
-longitude   = $cfg_default{node}{longitude}
+latitude    = $cfg{node}{latitude}
+longitude   = $cfg{node}{longitude}
 
 # FTP target
 [ftp]
-host        = $cfg_default{ftp}{host}
-username    = $cfg_default{ftp}{username}
-password    = $cfg_default{ftp}{password}
+host        = $cfg{ftp}{host}
+username    = $cfg{ftp}{username}
+password    = $cfg{ftp}{password}
 
 # HTML and text templates
 #
 # Defines the 
 [html]
-trim        = $cfg_default{html}{trim}
-dir         = $cfg_default{html}{dir}
+trim        = $cfg{html}{trim}
+dir         = $cfg{html}{dir}
 };
     exit;
 }
