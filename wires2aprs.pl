@@ -104,6 +104,10 @@ unless (getopts('b:c:de:hi:oqsv', \%args)) {
     exit;
 }
 
+sample() if defined $args{s};
+usage() if defined $args{h};
+version() if defined $args{v};
+
 $debug = 1 if defined $args{d};
 $quiet = 1 if defined $args{q};
 if ($debug) {
@@ -122,9 +126,6 @@ $oneshot = 1 if defined $args{o};
 $beacon = $args{b} if defined $args{b};
 $expire = $args{e} if defined $args{e};
 $interval = $args{i} if defined $args{i};
-sample() if defined $args{s};
-usage() if defined $args{h};
-version() if defined $args{v};
 
 # Set timer values to some sensible first run values
 my $rectmr = 0;                         # APRS-IS reconnect timer
