@@ -120,9 +120,12 @@ my %cfg = (
         trim        => '6',
         dir         => 'templates',
     },
+    script      => {
+        interval    => 60,
+    },
 );
 
-# Script defaults (overridden by command line args)
+# Script defaults (overridden by config file and command line args)
 my $debug       = "0";
 my $quiet       = "0";
 my $oneshot     = "0";
@@ -143,21 +146,27 @@ unless (getopts('dqoi:c:shv', \%args)) {
     exit;
 }
 
-$debug = 1 if defined $args{d};
-$quiet = 1 if defined $args{q};
-$oneshot = 1 if defined $args{o};
-$interval = $args{i} if defined $args{i};
-$cfgfile = $args{c} if defined $args{c};
 sample() if defined $args{s};
 usage() if defined $args{h};
 version() if defined $args{v};
 
+$debug = 1 if defined $args{d};
+$quiet = 1 if defined $args{q};
 if ($debug) {
     use Data::Dumper;
 }
 
 # Handle configuration file
+$cfgfile = $args{c} if defined $args{c};
 handle_config();
+
+$interval = $cfg{script}{interval} if (exists $cfg{script}{interval});
+
+$oneshot = 1 if defined $args{o};
+$interval = $args{i} if defined $args{i};
+
+
+# Handle configuration file
 
 # The main loop which runs forever unless 'oneshot' specified
 while (1) {
@@ -846,11 +855,15 @@ username    = $cfg{ftp}{username}
 password    = $cfg{ftp}{password}
 
 # HTML and text templates
-#
-# Defines the 
 [html]
 trim        = $cfg{html}{trim}
 dir         = $cfg{html}{dir}
+
+# Script paramters, command line takes precedence
+#
+# interval  - interval to read the log file in seconds
+[script]
+interval    = $cfg{script}{interval}
 };
     exit;
 }
