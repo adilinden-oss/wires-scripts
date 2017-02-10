@@ -47,9 +47,9 @@ my $use_socket_timeout = 1;
 
 # Script information
 my %script = (
-    name        => 'wires2aprs.pl',
-    version     => '0.9',
+    version     => '1.1',
     wiresx      => '1.120',
+    name        => 'wires2aprs.pl',
     author      => 'Adi Linden <adi@adis.ca>',
     license     => 'GPLv3 <http://www.gnu.org/licenses/>',
     github      => 'httpos://github.com/adilinden/wires-scripts/',
