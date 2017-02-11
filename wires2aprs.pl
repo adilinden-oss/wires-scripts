@@ -502,7 +502,7 @@ sub aprs_packet {
     $packet .= "$lon";
 
     # Add symbal (symbol code)
-    $packet .= $calls{$call}{overlay};;
+    $packet .= $calls{$call}{symbol};;
 
     # Add comment
     $packet .= $cfg{aprsis}{comment};
