@@ -99,6 +99,9 @@ my %script = (
 # github            - script repository
 my %template;
 
+# Saved last connect information
+my $lastconnect;
+
 # Configuration (with default values)
 my %cfg = (
     wiresx      => {
@@ -448,18 +451,33 @@ sub handle_nodelog {
     # just as one would expect.  However, if "Return to room" has been
     # configured, the upon a "Return to room" connection this field does
     # not get populated.  Although the node is in fact connected to the
-    # room and has a valid node list.  To workaround we use the last
-    # available "Connected to" line from the log if the "Connect to" is
-    # empty but the node list is populated.  This should not present a
-    # problem as we cannot connect to an empty room (of we are the only)
-    # connection we still show in the node list, so node list would not
-    # be empty.
+    # room and has a valid node list.  
+    #
+    # To workaround we use the last available "Connected to" line from
+    # the log if the "Connect to" is empty but the node list is populated.
+    # This should not present a problem as we cannot connect to an empty
+    # room (of we are the only) connection we still show in the node list,
+    # so node list would not be empty.
+    #
+    # A further issues was observed when the room connection persists for
+    # long periods of time.  The "Connected to" line will eventually be
+    # trimmed from the log in which case we still have a valid node list
+    # but no longer any indication of what we might be connected to.  Since
+    # this script now runs continuosly, instead of being started for each
+    # individual run, we can save the connect information as long as this
+    # script remains running.
+    #
     my $connect;
     if ($isconnect) {
         $connect = $isconnect;
     }
     elsif ($wasconnect and $list) {
         $connect = $wasconnect;
+        # Save connected node for later
+        $lastconnect = $wasconnect;
+    }
+    elsif ($lastconnect and $list) {
+        $connect = $lastconnect;    	
     }
 
     if ($connect) {
