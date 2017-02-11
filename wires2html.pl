@@ -349,8 +349,13 @@ sub handle_roomlog {
     }
 
     if ($get =~ /Round QSO Room Disabled/ ) {
+        $template{roomname} = "Room-Disabled";
+        $template{roomid} = "Disabled";
+        $template{roomno} = "n/a";
+        $template{roomlog_full} = "Round QSO Room Disabled";
+        $template{roomlog_trim} = "Round QSO Room Disabled";
         do_log(3, $func, "", "Room disabled");
-        return;
+        return 1;
     }
 
     # Strip unwanted html
