@@ -472,7 +472,7 @@ sub aprs_close {
     my $func = "aprs_close";
     do_log(3, $func);
 
-    $aprsis->close();
+    $aprsis->close() if ($aprsis);
     undef $aprsis;
 }
 
