@@ -297,12 +297,14 @@ sub handle_wireslog {
         $template{userall_trim} .= $user_row if ($i < $cfg{html}{trim});
 
         if ($log[$i][4] eq "V-CH") {
+            $user_row = make_user_row( $log[$i][3], $log[$i][0], $lat, $lon, $dist, $ai);
             $template{userair_full} .= $user_row;
             $template{userair_trim} .= $user_row if ($ai < $cfg{html}{trim});
             $ai++;
         }
 
         if ($log[$i][4] eq "Net") {
+            $user_row = make_user_row( $log[$i][3], $log[$i][0], $lat, $lon, $dist, $ni);
             $template{usernet_full} .= $user_row;
             $template{usernet_trim} .= $user_row if ($ni < $cfg{html}{trim});
             $ni++;
@@ -482,7 +484,7 @@ sub handle_nodelog {
         $lastconnect = $wasconnect;
     }
     elsif ($lastconnect and $list) {
-        $connect = $lastconnect;    	
+        $connect = $lastconnect;
     }
 
     if ($connect) {
