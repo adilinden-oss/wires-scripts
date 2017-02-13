@@ -4,9 +4,19 @@
     <meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0">
     <meta http-equiv="refresh" content="60">
     <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT">
+    <link rel="stylesheet" type="text/css" href="style.css">
     <title>{{roomid}} ({{roomno}}) Status</title>
 </head>
 <body>
+    <ul class="nav">
+        <li><a href="node.html">Node</a></li>
+        <li><a href="room.html" class="this">Room</a></li>
+        <li><a href="heard.html">Heardlog</a></li>
+        <li><a href="nodelog.html">Nodelog</a></li>
+        <li><a href="roomlog.html">Roomlog</a></li>
+    </ul>
+
     <h2>{{roomid}} ({{roomno}}) Status</h2>
     <p>
         List of nodes:<br><b>{{roomlist}}</b>

@@ -122,6 +122,8 @@ my %cfg = (
     html        => {
         trim        => '6',
         dir         => 'templates',
+        liststyle   => 'table',
+        seperator   => '&nbsp;',
     },
     script      => {
         interval    => 60,
@@ -262,6 +264,18 @@ sub handle_wireslog {
     }
     close($fh);
 
+    # Inititalize the log template variables
+    my $html = "";
+    $html = qq{<div class="userlog">\n} if ($cfg{html}{liststyle} =~ /div|br/);
+    $html = qq{<table class="userlog">\n} if ($cfg{html}{liststyle} eq "table");
+    $html = qq{<ul class="userlog">\n} if ($cfg{html}{liststyle} eq "ul");
+    $template{userall_full} = $html;
+    $template{userall_trim} = $html;
+    $template{userair_full} = $html;
+    $template{userair_trim} = $html;
+    $template{usernet_full} = $html;
+    $template{usernet_trim} = $html;
+
     # Reverse sort the array on date field
     @log = sort { $b->[3] cmp $a->[3] } @log;
 
@@ -286,12 +300,6 @@ sub handle_wireslog {
         }
 
         # Build the user logs
-        #
-        # Last Received
-        # User_ID
-        # Latitude
-        # Longitude
-        # Distance
         my $user_row = make_user_row( $log[$i][3], $log[$i][0], $lat, $lon, $dist, $i);
         $template{userall_full} .= $user_row;
         $template{userall_trim} .= $user_row if ($i < $cfg{html}{trim});
@@ -312,18 +320,89 @@ sub handle_wireslog {
 
         do_log(3, $func, "user", "$log[$i][3], $log[$i][0]");
     }
+
+    # Wrap up log template variables
+    $html = "";
+    $html = "\n</div>" if ($cfg{html}{liststyle} =~ /div|br/);
+    $html = "\n</table>" if ($cfg{html}{liststyle} eq "table");
+    $html = "\n</ul>" if ($cfg{html}{liststyle} eq "ul");
+    $template{userall_full} .= $html;
+    $template{userall_trim} .= $html;
+    $template{userair_full} .= $html;
+    $template{userair_trim} .= $html;
+    $template{usernet_full} .= $html;
+    $template{usernet_trim} .= $html;
+
     return 1;
 }
 
 sub make_user_row {
     my ($ts, $id, $lat, $lon, $dist, $i) = @_;
 
-    my $row = "";
-    $row .= "<br>\n" if ($i > 0);
-    $row  .= "$ts - $id";
-    if ($lat and $lon and $dist) {
-        $row .= qq{ - <a href="http://maps.google.com/maps?q=$lat,$lon" target="_blank">Position</a>};
-        $row .= " - $dist km";
+    # Build a user log row
+    #
+    # Last Received
+    # User_ID
+    # Latitude
+    # Longitude
+    # Distance
+    # Line Number
+    my $row;
+    my $seperator = qq{<span class="seperator">$cfg{html}{seperator}</span>};
+    my $url = qq{<a href="http://maps.google.com/maps?q=$lat,$lon" target="_blank">Map</a>};
+
+    if ($cfg{html}{liststyle} eq "div") {
+        # Create row with <div> containers
+        $row .= qq{<div class="row">};
+        $row .= qq{<div class="heard">$ts</div>};
+        $row .= qq{<div class="userid">$id</div>};
+        if ($lat and $lon and $dist) {
+            $row .= qq{<div class="position">$url</div>};
+            $row .= qq{<div class="distance">$dist km</div>};
+        }
+        $row .= qq{</div>\n};
+    }
+    elsif ($cfg{html}{liststyle} eq "table") {
+        # Create row with html <table>
+        $row .= qq{<tr>};
+        $row .= qq{<td class="heard">$ts</td>};
+        $row .= qq{<td class="userid">$id</td>};
+        if ($lat and $lon and $dist) {
+            $row .= qq{<td class="position">$url</td>};
+            $row .= qq{<td class="distance">$dist km</td>};
+        }
+        else {
+            $row .= qq{<td>&nbsp;</td>};
+            $row .= qq{<td>&nbsp;</td>};
+        }
+        $row .= qq{</tr>\n};
+    }
+    elsif ($cfg{html}{liststyle} eq "ul") {
+        # Create row with html <ul>
+        $row .= qq{<li>};
+        $row .= qq{<span class="heard">$ts</span>};
+        $row .= qq{$seperator<span class="userid">$id</span>};
+        if ($lat and $lon and $dist) {
+            $row .= qq{$seperator<span class="position">$url</span>};
+            $row .= qq{$seperator<span class="distance">$dist km</span>};
+        }
+        $row .= qq{</li>\n};
+    }
+    elsif ($cfg{html}{liststyle} eq "br") {
+        # If all else fails reate row with html <br>
+        $row .= "<br>\n" if ($i > 0);
+        $row .= qq{<span class="heard">$ts</span>};
+        $row .= qq{$seperator<span class="userid">$id</span>};
+        if ($lat and $lon and $dist) {
+            $row .= qq{$seperator<span class="position">$url</span>};
+            $row .= qq{$seperator<span class="distance">$dist km</span>};
+        }
+    }
+    else {
+        # If all else fails reate row with html <br>
+        $row .= "<br>\n" if ($i > 0);
+        $row .= "$ts - $id";
+        $row .= " - $url - $dist" if ($lat and $lon and $dist);
     }
     return $row;
 }
@@ -389,6 +468,14 @@ sub handle_roomlog {
     $template{roomno} = $no if ($no);
     $template{roomlist} = $list if ($list);
 
+    # Inititalize the log template variables
+    my $html = "";
+    $html = qq{<div class="roomlog">\n} if ($cfg{html}{liststyle} =~ /div|br/);
+    $html = qq{<table class="roomlog">\n} if ($cfg{html}{liststyle} eq "table");
+    $html = qq{<ul class="roomlog">\n} if ($cfg{html}{liststyle} eq "ul");
+    $template{roomlog_full} = $html;
+    $template{roomlog_trim} = $html;
+
     # Reverse the log
     if ($log) {
         my $i = 0;
@@ -398,6 +485,14 @@ sub handle_roomlog {
             $i++;
         }
     }
+
+    # Wrap up log template variables
+    $html = "";
+    $html = "\n</div>" if ($cfg{html}{liststyle} =~ /div|br/);
+    $html = "\n</table>" if ($cfg{html}{liststyle} eq "table");
+    $html = "\n</ul>" if ($cfg{html}{liststyle} eq "ul");
+    $template{roomlog_full} .= $html;
+    $template{roomlog_trim} .= $html;
 
     do_log(3, $func, "roomname   ", $template{roomname});
     do_log(3, $func, "roomid     ", $template{roomid});
@@ -503,6 +598,14 @@ sub handle_nodelog {
     $template{nodeid} = $id if ($id);
     $template{nodeno} = $no if ($no);
 
+    # Inititalize the log template variables
+    my $html = "";
+    $html = qq{<div class="nodelog">\n} if ($cfg{html}{liststyle} =~ /div|br/);
+    $html = qq{<table class="nodelog">\n} if ($cfg{html}{liststyle} eq "table");
+    $html = qq{<ul class="nodelog">\n} if ($cfg{html}{liststyle} eq "ul");
+    $template{nodelog_full} = $html;
+    $template{nodelog_trim} = $html;
+
     # Reverse the log
     if ($log) {
         my $i = 0;
@@ -512,6 +615,14 @@ sub handle_nodelog {
             $i++;
         }
     }
+
+    # Wrap up log template variables
+    $html = "";
+    $html = "\n</div>" if ($cfg{html}{liststyle} =~ /div|br/);
+    $html = "\n</table>" if ($cfg{html}{liststyle} eq "table");
+    $html = "\n</ul>" if ($cfg{html}{liststyle} eq "ul");
+    $template{nodelog_full} .= $html;
+    $template{nodelog_trim} .= $html;
 
     do_log(3, $func, "isconnect  ", $isconnect);
     do_log(3, $func, "wasconnect ", $wasconnect);
@@ -531,9 +642,49 @@ sub handle_nodelog {
 sub make_log_row {
     my ($line, $i) = @_;
 
-    my $row = "";
-    $row .= "<br>\n" if ($i > 0);
-    $row  .= "$line";
+    # Each line is a timestamp followed by log string.  Let's hit the
+    # timestamp with some styling possibilities.
+    #
+    # Example line:
+    #
+    # 2017/02/12 19:22:04  VA3EOD-RPT(18138) IN. 8 Nodes.
+    my ($ts, $str) = $line =~ m!^(\d+/\d+/\d+ \d+:\d+:\d+)\s+(.*)$!;
+
+    my $row;
+    my $seperator = qq{<span class="seperator">$cfg{html}{seperator}</span>};
+
+    if ($cfg{html}{liststyle} eq "div") {
+        # Create row with <div> containers
+        $row .= qq{<div class="row">};
+        $row .= qq{<div class="when">$ts</div>};
+        $row .= qq{<div class="log">$str</div>};
+        $row .= qq{</div>\n};
+    }
+    elsif ($cfg{html}{liststyle} eq "table") {
+        # Create row with html <table>
+        $row .= qq{<tr>};
+        $row .= qq{<td class="when">$ts</td>};
+        $row .= qq{<td class="log">$str</td>};
+        $row .= qq{</tr>\n};
+    }
+    elsif ($cfg{html}{liststyle} eq "ul") {
+        # Create row with html <ul>
+        $row .= qq{<li>};
+        $row .= qq{<span class="when">$ts</span>};
+        $row .= qq{$seperator<span class="log">$str</span>};
+        $row .= qq{</li>\n};
+    }
+    elsif ($cfg{html}{liststyle} eq "br") {
+        # If all else fails reate row with html <br>
+        $row .= "<br>\n" if ($i > 0);
+        $row .= qq{<span class="when">$ts</span>};
+        $row .= qq{$seperator<span class="log">$str</span>};
+    }
+    else {
+        # If all else fails reate row with html <br>
+        $row .= "<br>\n" if ($i > 0);
+        $row .= "$ts $str";
+    }
     return $row;
 }
 
@@ -874,15 +1025,35 @@ latitude    = $cfg{node}{latitude}
 longitude   = $cfg{node}{longitude}
 
 # FTP target
+#
+# FTP login information
+# 
 [ftp]
 host        = $cfg{ftp}{host}
 username    = $cfg{ftp}{username}
 password    = $cfg{ftp}{password}
 
 # HTML and text templates
+#
+# To see what each html style produces change the configuration file
+# and evaluate the output generated.
+#
+# trim          number of lines to keep in trim(med) log output
+# dir           local directory to look for template files
+# liststyle     how to construct the lists, valid values:
+#       br      list wrappen in <div> using <br> with each line
+#       div     table styled using <div> containers
+#       simple  simple line breaks using <br> html tags
+#       table   table styled using <table> tags
+#       ul      simple unordered list using <ul> and <li> tags
+# seperator     string used as seperator between elements when using
+#               list styles 'br' or 'ul'
+#
 [html]
 trim        = $cfg{html}{trim}
 dir         = $cfg{html}{dir}
+liststyle   = $cfg{html}{liststyle}
+seperator   = $cfg{html}{seperator}
 
 # Script paramters, command line takes precedence
 #

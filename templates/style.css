@@ -1,0 +1,56 @@
+/*
+ * This is an example stylesheet included with wires2html.pl
+ */
+
+body {
+    width: 60em;
+    margin: 0 auto;
+    float: none;
+    font-family: Tahoma, Verdana, Arial, sans-serif;
+    color: #454e54;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+td, th {
+    text-align: left;
+    font-weight: normal;
+    padding: .2em .5em .2em .5em; /* top, righ, bottom, left */
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+a {
+    color: #51b9db;
+    text-decoration: none
+}
+
+a:visited {
+    color: #51b9db
+}
+
+a:hover {
+    color: #51b9db;
+    text-decoration: underline
+}
+
+ul.nav {
+    list-style: none;
+    line-height: 1em;
+    padding: 0;
+    margin: 1.5em 0 0 0;
+}
+
+ul.nav li {
+    display: inline-block;
+    padding: 0 1.5em 0 0;
+    margin: 0;
+}
+
+ul.nav .this {
+    color: #454e54;
+}
