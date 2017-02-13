@@ -57,7 +57,7 @@ use Net::FTP;
 
 # Script information
 my %script = (
-    version     => '1.2',
+    version     => '1.3',
     wiresx      => '1.120',
     name        => 'wires2html.pl',
     author      => 'Adi Linden <adi@adis.ca>',
