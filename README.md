@@ -177,15 +177,35 @@ latitude    = 43.806111
 longitude   = -81.273889
 
 # FTP target
+#
+# FTP login information
+# 
 [ftp]
 host        = ftp.qsl.net
 username    = n0call
 password    = topsecretpassword
 
 # HTML and text templates
+#
+# To see what each html style produces change the configuration file
+# and evaluate the output generated.
+#
+# trim          number of lines to keep in trim(med) log output
+# dir           local directory to look for template files
+# liststyle     how to construct the lists, valid values:
+#       br      list wrappen in <div> using <br> with each line
+#       div     table styled using <div> containers
+#       simple  simple line breaks using <br> html tags
+#       table   table styled using <table> tags
+#       ul      simple unordered list using <ul> and <li> tags
+# seperator     string used as seperator between elements when using
+#               list styles 'br' or 'ul'
+#
 [html]
 trim        = 6
 dir         = templates
+liststyle   = table
+seperator   = &nbsp;
 
 # Script paramters, command line takes precedence
 #
