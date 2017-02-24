@@ -84,6 +84,9 @@ my %script = (
 # usernet_full      - Users heard on net (full)
 # usernet_trim      - Users heard on net (trimmed)
 #
+# mapdatanode       - Node info for map generation
+# mapdatauser       - Users heard for map generation
+#
 # roomname          - Name of room
 # roomid            - User ID of room
 # roomno            - DTMF ID of room
@@ -97,6 +100,8 @@ my %script = (
 # author            - script author
 # license           - script license
 # github            - script repository
+#
+# apikey            - API key for Google Maps
 my %template;
 
 # Saved last connect information
@@ -124,6 +129,9 @@ my %cfg = (
         dir         => 'templates',
         liststyle   => 'table',
         seperator   => '&nbsp;',
+    },
+    google      => {
+        apikey      => 'google-maps-api-key',
     },
     script      => {
         interval    => 60,
@@ -195,6 +203,8 @@ while (1) {
         userair_trim        => "",
         usernet_full        => "",
         usernet_trim        => "",
+        mapdatanode         => "",
+        mapdatauser         => "",
         roomname            => "",
         roomid              => "",
         roomno              => "",
@@ -207,6 +217,7 @@ while (1) {
         author              => $script{author},
         license             => $script{license},
         github              => $script{github},
+        apikey              => $cfg{google}{apikey},
    );
 
     # Handle WiresAccess.log
@@ -297,6 +308,18 @@ sub handle_wireslog {
             if ($lat and $lon) {
                 $dist = sprintf("%.2f", distance($cfg{node}{latitude}, $cfg{node}{longitude}, $lat, $lon, "K"));
             }
+
+            # Populate mapdata temlate variable
+            $template{mapdatauser} .= "      { ";
+            $template{mapdatauser} .= qq{lat: "$lat", };
+            $template{mapdatauser} .= qq{lng: "$lon", };
+            $template{mapdatauser} .= qq{distance: "$dist", };
+            $template{mapdatauser} .= qq{user_id: "$log[$i][0]", };
+            $template{mapdatauser} .= qq{call: "$log[$i][2]", };
+            $template{mapdatauser} .= qq{heard: "$log[$i][3]", };
+            $template{mapdatauser} .= qq{posit: "}.escape_double($log[$i][6]).qq{", };
+            $template{mapdatauser} .= qq{channel: "$log[$i][4]", };
+            $template{mapdatauser} .= "},\n";
         }
 
         # Build the user logs
@@ -624,6 +647,15 @@ sub handle_nodelog {
     $template{nodelog_full} .= $html;
     $template{nodelog_trim} .= $html;
 
+    # Populate mapdata temlate variable
+    $template{mapdatanode}  = "{ ";
+    $template{mapdatanode} .= qq{lat: "$cfg{node}{latitude}", };
+    $template{mapdatanode} .= qq{lng: "$cfg{node}{longitude}", };
+    $template{mapdatanode} .= qq{user_id: "$template{nodeid}", };
+    $template{mapdatanode} .= qq{call: "$template{nodecall}", };
+    $template{mapdatanode} .= qq{number: "$template{nodeno}", };
+    $template{mapdatanode} .= "}";
+
     do_log(3, $func, "isconnect  ", $isconnect);
     do_log(3, $func, "wasconnect ", $wasconnect);
     do_log(3, $func, "list       ", $list);
@@ -854,7 +886,10 @@ sub convert_coordinates {
 
     # Capture coordinates into an array
     #
-    # Example: N:39 08' 34" / W:077 10' 03"
+    # Two possible formats:
+    #
+    #    N:39 08' 34" / W:077 10' 03"
+    #    Lat:N:45 28' 57" / Lon:W:075 31' 41" / R:001km /
     #
     # Latitude:
     # $cap[0] :     N|S
@@ -868,6 +903,11 @@ sub convert_coordinates {
     # $cap[6] :     minute
     # $cap[7] :     second
     my @cap = $coord =~ m!^([NS]):(\d+) (\d+)\' (\d+)" / ([EW]):(\d+) (\d+)\' (\d+)"$!;
+
+    # Try the alternate fomrat seen in log
+    unless (@cap) {
+        @cap = $coord =~ m!^Lat:([NS]):(\d+) (\d+)\' (\d+)" / Lon:([EW]):(\d+) (\d+)\' (\d+)".*?$!;
+    }
 
     my $lat = '';
     my $lon = '';
@@ -935,6 +975,12 @@ sub config_dump {
         }
         do_log(2, $func, "", " ");
     }
+}
+
+sub escape_double {
+    my $s = shift;
+    $s =~ s/(["])/\\$1/g;
+    return $s;
 }
 
 sub trim {
@@ -1054,6 +1100,13 @@ trim        = $cfg{html}{trim}
 dir         = $cfg{html}{dir}
 liststyle   = $cfg{html}{liststyle}
 seperator   = $cfg{html}{seperator}
+
+# API Key for Google Maps
+#
+# See https://developers.google.com/maps/documentation/javascript/get-api-key
+#
+[google]
+apikey      = $cfg{google}{apikey}
 
 # Script paramters, command line takes precedence
 #
