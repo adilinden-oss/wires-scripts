@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>{{nodeid}} ({{nodeno}}) Map of Heard Stations</title>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+        #map-wrap {
+            height: 100%;
+            width: 100%;
+        }
+        #map {
+            position: absolute;
+            top: 4rem;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+        }
+    </style>
+</head>
+<body>
+    <ul class="nav">
+        <li><a href="node.html">Node</a></li>
+        <li><a href="room.html">Room</a></li>
+        <li><a href="heard.html">Heardlog</a></li>
+        <li><a href="nodelog.html">Nodelog</a></li>
+        <li><a href="roomlog.html">Roomlog</a></li>
+    </ul>
+    <!--
+    <h2>{{nodeid}} ({{nodeno}}) Map of Heard Stations</h2>
+    -->
+    <div id="map-wrap">
+        <div id="map"></div>
+    </div>
+    <script>
+
+    // Define lat, long and other info for markers
+    var nodeInfo = {{mapdatanode}};
+    var heardInfo = [
+        {{mapdatauser}}
+    ];
+    var markerIcon = {
+        red: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        yellow: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+        blue: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        green: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+        ltblue: 'http://maps.google.com/mapfiles/ms/icons/ltblue-dot.png',
+        orange: 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png',
+        pink: 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png',
+        purple: 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+    };
+
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            zoom: 5,
+            center: new google.maps.LatLng(nodeInfo.lat, nodeInfo.lng),
+        });
+
+        var info = new google.maps.InfoWindow();
+        var bound = new google.maps.LatLngBounds();
+
+        setMarker(map, info, bound, nodeInfo);
+        setMarkers(map, info, bound, heardInfo);
+        map.fitBounds(bound);
+
+        var minZoom = 2;
+        google.maps.event.addListener(map, 'zoom_changed', function() {
+            if (map.getZoom() < minZoom) map.setZoom(minZoom);
+        });
+    }
+
+    function setMarker(map, info, bound, pin) {
+        var marker = new google.maps.Marker({
+            position: new google.maps.LatLng(pin.lat, pin.lng),
+            map: map,
+            title: pin.user_id,
+            description: "<b>"+pin.user_id+"</b><br>This Node<br>"+pin.call+"("+pin.number+")",
+        });
+
+        google.maps.event.addListener(marker, "click", function () {
+            info.setContent(this.description);
+            info.open(map, this);                
+        });
+
+        marker.setIcon(markerIcon.red);
+        bound.extend(marker.position);
+    }
+
+    function setMarkers(map, info, bound, pins) {
+        for (var i = 0; i < pins.length; i++) {
+            var marker = new google.maps.Marker({
+                position: new google.maps.LatLng(pins[i].lat, pins[i].lng),
+                map: map,
+                title: pins[i].user_id,
+                description: "<b>"+pins[i].user_id+"</b><br>"+pins[i].distance+" km<br>"+pins[i].heard+"<br>"+pins[i].posit+"",
+            });
+
+            google.maps.event.addListener(marker, "click", function () {
+                info.setContent(this.description);
+                info.open(map, this);                
+            });
+
+            if (pins[i].channel == "V-CH") {
+                marker.setIcon(markerIcon.green);
+            } else {
+                marker.setIcon(markerIcon.blue);
+            }
+            bound.extend(marker.position);
+        }
+    }
+
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{apikey}}&callback=initMap">
+    </script>
+</body
+</html>
