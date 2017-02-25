@@ -656,6 +656,7 @@ sub handle_nodelog {
     $template{mapdatanode} .= qq{user_id: "$template{nodeid}", };
     $template{mapdatanode} .= qq{call: "$template{nodecall}", };
     $template{mapdatanode} .= qq{number: "$template{nodeno}", };
+    $template{mapdatanode} .= qq{age: 1, };
     $template{mapdatanode} .= "}";
 
     do_log(3, $func, "isconnect  ", $isconnect);

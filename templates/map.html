@@ -25,6 +25,19 @@
             right: 0px;
             bottom: 0px;
         }
+        #panel {
+            position: absolute;
+            top: 4.5rem;
+            left: 20%;
+            z-index: 5;
+            background-color: #fff;
+            padding: 5px;
+            border: 1px solid #999;
+            text-align: center;
+            font-family: 'Roboto','sans-serif';
+            line-height: 30px;
+            padding-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -39,6 +52,14 @@
     <h2>{{nodeid}} ({{nodeno}}) Map of Heard Stations</h2>
     -->
     <div id="map-wrap">
+        <div id="panel">
+            <input onclick="allMarkers();" type=button value="All">
+            <input onclick="thirtyMarkers();" type=button value="30 Day">
+            <input onclick="tenMarkers();" type=button value="10 Day">
+            <input onclick="sevenMarkers();" type=button value="7 Day">
+            <input onclick="twoMarkers();" type=button value="2 Day">
+            <input onclick="oneMarkers();" type=button value="1 Day">
+        </div>
         <div id="map"></div>
     </div>
     <script>
@@ -58,9 +79,11 @@
         pink: 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png',
         purple: 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
     };
+    var map;
+    var markers = [];
 
     function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
+        map = new google.maps.Map(document.getElementById('map'), {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoom: 5,
             center: new google.maps.LatLng(nodeInfo.lat, nodeInfo.lng),
@@ -85,6 +108,7 @@
             map: map,
             title: pin.user_id,
             description: "<b>"+pin.user_id+"</b><br>This Node<br>"+pin.call+"("+pin.number+")",
+            age: pin.age,
         });
 
         google.maps.event.addListener(marker, "click", function () {
@@ -94,6 +118,7 @@
 
         marker.setIcon(markerIcon.red);
         bound.extend(marker.position);
+        markers.push(marker);
     }
 
     function setMarkers(map, info, bound, pins) {
@@ -103,6 +128,7 @@
                 map: map,
                 title: pins[i].user_id,
                 description: "<b>"+pins[i].user_id+"</b><br>"+pins[i].distance+" km<br>"+pins[i].heard+"<br>"+pins[i].posit+"",
+                age: pins[i].age,
             });
 
             google.maps.event.addListener(marker, "click", function () {
@@ -116,7 +142,43 @@
                 marker.setIcon(markerIcon.blue);
             }
             bound.extend(marker.position);
+            markers.push(marker);
         }
+    }
+
+    function toggleMarkers(map, age) {
+        for (var i = 0; i < markers.length; i++) {
+            if (markers[i].age < age) {
+                markers[i].setMap(map);
+            } else {
+                markers[i].setMap(null);
+            }
+        }
+    }
+
+    // Turn on all markers (one year should suffice)
+    function allMarkers() {
+        toggleMarkers(map, 60*60*24*365)
+    }
+
+    function thirtyMarkers() {
+        toggleMarkers(map, 60*60*24*30)
+    }
+
+    function tenMarkers() {
+        toggleMarkers(map, 60*60*24*10)
+    }
+
+    function sevenMarkers() {
+        toggleMarkers(map, 60*60*24*7)
+    }
+
+    function twoMarkers() {
+        toggleMarkers(map, 60*60*48)
+    }
+
+    function oneMarkers() {
+        toggleMarkers(map, 60*60*24)
     }
 
     </script>
