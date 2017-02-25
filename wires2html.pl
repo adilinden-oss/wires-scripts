@@ -45,6 +45,7 @@
 use strict;
 use warnings;
 
+use Time::Local;
 use HTTP::Tiny;
 use Config::Tiny;
 use Getopt::Std;
@@ -317,6 +318,7 @@ sub handle_wireslog {
             $template{mapdatauser} .= qq{user_id: "$log[$i][0]", };
             $template{mapdatauser} .= qq{call: "$log[$i][2]", };
             $template{mapdatauser} .= qq{heard: "$log[$i][3]", };
+            $template{mapdatauser} .= qq{age: "}.heard_to_age($log[$i][3]).qq{", };
             $template{mapdatauser} .= qq{posit: "}.escape_double($log[$i][6]).qq{", };
             $template{mapdatauser} .= qq{channel: "$log[$i][4]", };
             $template{mapdatauser} .= "},\n";
@@ -681,6 +683,7 @@ sub make_log_row {
     #
     # 2017/02/12 19:22:04  VA3EOD-RPT(18138) IN. 8 Nodes.
     my ($ts, $str) = $line =~ m!^(\d+/\d+/\d+ \d+:\d+:\d+)\s+(.*)$!;
+    return " " unless ($ts and $str);
 
     my $row;
     my $seperator = qq{<span class="seperator">$cfg{html}{seperator}</span>};
@@ -876,6 +879,21 @@ sub http_get {
         return $r->{content};
     }
     return;
+}
+
+sub heard_to_age {
+    my ($time) = @_;
+
+    my $func = "heard_to_age";
+    do_log(3, $func, "in time", $time);
+
+    # Parse date
+    # Example: 2017/01/07 21:26:05
+    my @cap = $time =~ m!^(\d+)/(\d+)/(\d+) (\d+):(\d+):(\d+)$!;
+	my $age = time() - timelocal($cap[5], $cap[4], $cap[3], $cap[2], $cap[1] - 1, $cap[0]);
+
+    do_log(3, $func, "out age", "$age");
+    return $age;
 }
 
 sub convert_coordinates {
