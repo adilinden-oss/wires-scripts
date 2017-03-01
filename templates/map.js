@@ -15,12 +15,12 @@
  *
  *   The following http GET variables are supported:
  *
- *     cluster      if 'true' enables the MarkerClusterer features.
- *     userid       if a userid is provided and matched in markers map
- *                  is zoomed into the matching marker.
- *     zoom         if zoom level is provided in addition to a userid
- *                  map is zoomed to the specified level, else maxZoom
- *                  applies.
+ *     style        'plain' displays a plain map with many markers.
+ *                  'cluster' enables the MarkerClusterer features.                  
+ *     userid       a provided userid is matched in markers array and
+ *                  zoomed into.
+ *     zoom         a zoom level (f provided) is used to zoom into the
+ *                  marker specified by userid.
  */
 
 // Define maximum zoom level for clusterer to cluster and zoom on click
@@ -78,9 +78,10 @@ function initMap() {
     setMarkers(map, info, bound, heardInfo);
 
     // Is clusterer requested via GET variable?
-    var clusterOn = String(getUrlVars()["cluster"]);
+    var mapStyle = String(getUrlVars()["style"]);
 
-    if (clusterOn != null && clusterOn == "true") {
+    if (mapStyle != null && mapStyle == "cluster") {
+        
         // Add marker clusterer to manage the markers.
         var markerCluster = new MarkerClusterer(map, markers, {
             imagePath: 'mapcluster.d/m',

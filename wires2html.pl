@@ -87,6 +87,7 @@ my %script = (
 #
 # mapdatanode       - Node info for map generation
 # mapdatauser       - Users heard for map generation
+# mapstyle          - The map style
 #
 # roomname          - Name of room
 # roomid            - User ID of room
@@ -129,6 +130,8 @@ my %cfg = (
         trim        => '6',
         dir         => 'templates',
         binary      => 'png gif jpg jpeg pdf js',
+        mapstyle    => 'plain',
+        maplink     => 'plain',
         liststyle   => 'table',
         seperator   => '&nbsp;',
     },
@@ -207,6 +210,7 @@ while (1) {
         usernet_trim        => "",
         mapdatanode         => "",
         mapdatauser         => "",
+        mapstyle            => $cfg{html}{mapstyle},
         roomname            => "",
         roomid              => "",
         roomno              => "",
@@ -376,13 +380,19 @@ sub make_user_row {
     my $row;
     my $seperator = qq{<span class="seperator">$cfg{html}{seperator}</span>};
     
-    # Where does Maps link go?
-    #
-    # Originally to Google Maps
-    # my $url = qq{<a href="http://maps.google.com/maps?q=$lat,$lon" target="_blank">Map</a>};
-    # Now to our own map
-    my $url = qq{<a href="mapcluster.html?userid=$id">Map</a>};
-
+    my $url = '&nbsp;';
+    if ($cfg{html}{maplink} eq "plain") {
+        # Plain map
+        $url = qq{<a href="map.html?style=plain&userid=$id">Map</a>};
+    }
+    elsif ($cfg{html}{maplink} eq "cluster") {
+        # Marker clusterer
+        $url = qq{<a href="map.html?style=cluster&userid=$id">Map</a>};
+    }
+    elsif ($cfg{html}{maplink} eq "google") {
+        # Google URL
+        $url = qq{<a href="http://maps.google.com/maps?q=$lat,$lon" target="_blank">Map</a>};
+    }
 
     if ($cfg{html}{liststyle} eq "div") {
         # Create row with <div> containers
@@ -1170,12 +1180,20 @@ password    = $cfg{ftp}{password}
 # trim          number of lines to keep in trim(med) log output
 # dir           local directory to look for template files
 # binary        file extensions exempt from substitutions
+# mapstyle      how to display markers on the map
+#       plain       plain map
+#       cluster     cluster markers
+# maplink       how to link coordinates in heardlog
+#       plain       link to plain map
+#       cluster     link to cluster markers
+#       google      link to Google maps URL instead of own map
+#       none        don't display map link
 # liststyle     how to construct the lists, valid values:
-#       br      list wrappen in <div> using <br> with each line
-#       div     table styled using <div> containers
-#       simple  simple line breaks using <br> html tags
-#       table   table styled using <table> tags
-#       ul      simple unordered list using <ul> and <li> tags
+#       br          list wrappen in <div> using <br> with each line
+#       div         table styled using <div> containers
+#       simple      simple line breaks using <br> html tags
+#       table       table styled using <table> tags
+#       ul          simple unordered list using <ul> and <li> tags
 # seperator     string used as seperator between elements when using
 #               list styles 'br' or 'ul'
 #
@@ -1183,6 +1201,8 @@ password    = $cfg{ftp}{password}
 trim        = $cfg{html}{trim}
 dir         = $cfg{html}{dir}
 binary      = $cfg{html}{binary}
+mapstyle    = $cfg{html}{mapstyle}
+maplink     = $cfg{html}{maplink}
 liststyle   = $cfg{html}{liststyle}
 seperator   = $cfg{html}{seperator}
 
