@@ -128,6 +128,7 @@ my %cfg = (
     html        => {
         trim        => '6',
         dir         => 'templates',
+        binary      => 'png gif jpg jpeg pdf js',
         liststyle   => 'table',
         seperator   => '&nbsp;',
     },
@@ -747,49 +748,83 @@ sub bring_it_on {
     my $ftp = ftp_open();
     return unless ($ftp);
 
-    # Change FTP directory
-    ftp_dir($ftp, $ftpdir);
-
-    # Read directory
-    read_dir($ftp);
+    # Read the directory
+    read_dir($ftp, $cfg{html}{dir}, $ftpdir);
 
     # Close FTP
     ftp_close($ftp);
 }
 
 sub read_dir {
-    my ($ftp) = @_;
+    my ($ftp, $ldir, $rdir) = @_;
 
     my $func = "read_dir";
-    do_log(2, $func, '', $cfg{html}{dir});
+    do_log(2, $func, '', "local: $ldir, remote: $rdir");
 
+    # Notes:
+    #
+    #   - The local directory $ldir is a path that can be several
+    #     several directories deep
+    #   - The remote directory $rdir is a single directory that we
+    #     descend into
+
+    # (Create) and change dir on FTP server
+    return unless ftp_dir($ftp, $rdir);
+
+    # Handle local directory
     my $dh;
-    if (! opendir($dh, $cfg{html}{dir})) {
-        do_log(1, $func, "opendir", "Could not open '$cfg{html}{dir}' $!");
-        return;
-    }
-    while (my $file = readdir $dh) {
-        # Skip dot files
-        next if $file =~ (m/^\./);
+    if (opendir($dh, $ldir)) {
+        while (my $file = readdir $dh) {
 
-        # Process file
-        my $gut;
-        read_file("$cfg{html}{dir}/$file", \$gut);
+            # Skip dot files
+            next if ($file =~ m/^\./);
 
-        # Send file to FTP server
-        ftp_put($ftp, "$file", \$gut);
+            # Recurse into directories
+            if (-d "$ldir/$file") {
+                read_dir($ftp, "$ldir/$file", $file);
+                next;
+            }
+
+            # Skip unless a plain file
+            next unless (-f "$ldir/$file");
+
+            # Process file
+            my $gut;
+
+            # Regex to test file extensions
+            (my $ext = trim($cfg{html}{binary})) =~ s/(\s+)/|/g;
+            if ($file =~ m/^.*\.($ext)$/) {
+                # Is binary file
+                read_binary("$ldir/$file", \$gut);            
+                $ftp->binary();
+            } else {
+                # Is text file
+                read_text("$ldir/$file", \$gut);
+                $ftp->ascii();
+            }
+
+            # Send file to FTP server
+            ftp_put($ftp, "$file", \$gut);
+        }
+
+        # Done with local directory
+        closedir($dh);
+    } else {
+        do_log(1, $func, "opendir", "Could not open '$ldir' $!");
     }
-    closedir($dh);
+
+    # Change dir on the FTP server (go up)
+    $ftp->cdup();
 }
 
-sub read_file {
+sub read_text {
     my ($file, $gutref) = @_;
 
-    my $func = "read_file";
+    my $func = "read_text";
     do_log(2, $func, '', $file);
 
     my $fh;
-    if (! open($fh, "<:encoding(UTF-8)", "$file")) {
+    if (! open($fh, "<", $file)) {
         do_log(1, $func, "open", "Could not open file '$file' $!");
         return;
     }
@@ -802,6 +837,28 @@ sub read_file {
         s/\{\{($search_for)\}\}/$template{$1}/g;
         $$gutref .= $_;
     }
+
+    close($fh);
+    return 1;
+}
+
+sub read_binary {
+    my ($file, $gutref) = @_;
+
+    my $func = "read_binary";
+    do_log(2, $func, '', $file);
+
+    my $fh;
+    if (! open($fh, "<", $file)) {
+        do_log(1, $func, "open", "Could not open file '$file' $!");
+        return;
+    }
+
+    # Read file into variable and replace template variables
+    while (<$fh>) {
+        $$gutref .= $_;
+    }
+
     close($fh);
     return 1;
 }
@@ -1105,6 +1162,7 @@ password    = $cfg{ftp}{password}
 #
 # trim          number of lines to keep in trim(med) log output
 # dir           local directory to look for template files
+# binary        file extensions exempt from substitutions
 # liststyle     how to construct the lists, valid values:
 #       br      list wrappen in <div> using <br> with each line
 #       div     table styled using <div> containers
@@ -1117,6 +1175,7 @@ password    = $cfg{ftp}{password}
 [html]
 trim        = $cfg{html}{trim}
 dir         = $cfg{html}{dir}
+binary      = $cfg{html}{binary}
 liststyle   = $cfg{html}{liststyle}
 seperator   = $cfg{html}{seperator}
 
