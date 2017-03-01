@@ -193,7 +193,7 @@
                     if (zoom != null && zoom > 0) {
                         map.setZoom(zoom);
                     } else {
-                        map.setZoom(maxZoom);
+                        map.setZoom(maxZoom + 1);
                     }
                     // Map is all setup, get out
                     return;
