@@ -113,7 +113,7 @@
 
         // Add a marker clusterer to manage the markers.
         var markerCluster = new MarkerClusterer(map, markers, {
-            imagePath: 'https://github.com/googlemaps/v3-utility-library/raw/master/markerclusterer/images/m',
+            imagePath: 'mapcluster.d/m',
             maxZoom: maxZoom,
         });
 
@@ -225,7 +225,7 @@
     }
 
     </script>
-    <script src="https://github.com/googlemaps/v3-utility-library/raw/master/markerclusterer/src/markerclusterer.js">
+    <script src="mapcluster.d/markerclusterer.js">
     </script>
     <script async defer src="https://maps.googleapis.com/maps/api/js?key={{apikey}}&callback=initMap">
     </script>
