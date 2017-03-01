@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>{{nodeid}} ({{nodeno}}) Map of Heard Stations</title>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+        #map-wrap {
+            height: 100%;
+            width: 100%;
+        }
+        #map {
+            position: absolute;
+            top: 4rem;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+        }
+        #panel {
+            position: absolute;
+            top: 4.5rem;
+            left: 20%;
+            z-index: 5;
+            background-color: #fff;
+            padding: 5px;
+            border: 1px solid #999;
+            text-align: center;
+            font-family: 'Roboto','sans-serif';
+            line-height: 30px;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <ul class="nav">
+        <li><a href="node.html">Node</a></li>
+        <li><a href="room.html">Room</a></li>
+        <li><a href="heard.html">Heardlog</a></li>
+        <li><a href="nodelog.html">Nodelog</a></li>
+        <li><a href="roomlog.html">Roomlog</a></li>
+    </ul>
+    <!--
+    <h2>{{nodeid}} ({{nodeno}}) Map of Heard Stations</h2>
+    -->
+    <div id="map-wrap">
+        <div id="panel">
+            <input onclick="allMarkers();" type=button value="All">
+            <input onclick="thirtyMarkers();" type=button value="30 Day">
+            <input onclick="tenMarkers();" type=button value="10 Day">
+            <input onclick="sevenMarkers();" type=button value="7 Day">
+            <input onclick="twoMarkers();" type=button value="2 Day">
+            <input onclick="oneMarkers();" type=button value="1 Day">
+        </div>
+        <div id="map"></div>
+    </div>
+    <script>
+
+    // Define lat, long and other info for markers
+    var nodeInfo = {{mapdatanode}};
+    var heardInfo = [
+        {{mapdatauser}}
+    ];
+
+    </script>
+    <script type="text/javascript" src="mapcluster.d/markerclusterer.js"></script>
+    <script src="map.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{apikey}}&callback=initMap"></script>
+</body
+</html>
