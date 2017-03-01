@@ -99,6 +99,7 @@
     };
     var map;
     var markers = [];
+    var defaultZoom = 17;
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
@@ -112,7 +113,9 @@
 
         setMarker(map, info, bound, nodeInfo);
         setMarkers(map, info, bound, heardInfo);
-        map.fitBounds(bound);
+
+        // Adjust center and zoom level
+        zoomCall(map, bound);
 
         var minZoom = 3;
         google.maps.event.addListener(map, 'zoom_changed', function() {
@@ -197,6 +200,52 @@
 
     function oneMarkers() {
         toggleMarkers(map, 60*60*24)
+    }
+
+    function zoomCall(map, bound) {
+        var userid = String(getUrlVars()["userid"]);
+        var zoom = parseInt(getUrlVars()["zoom"]);
+
+
+        if (userid != null && userid.length > 0) {
+            // Find userid in markers array
+            for (var i = 0; i < markers.length; i++) {
+                if (markers[i].title == userid) {
+                    // Center map on userid
+                    map.setCenter(markers[i].position);
+                    // Set zoom for matched userid
+                    if (zoom != null && zoom > 0) {
+                        map.setZoom(zoom);
+                    } else {
+                        map.setZoom(defaultZoom);
+                    }
+                    // Map is all setup, get out
+                    return;
+                }
+            }
+
+        }
+
+        // Must not have found call zoom to fit all markers
+        map.fitBounds(bound);
+    }
+
+    function getUrlVars() {
+        // Shamelessly copied from http://papermashup.com/read-url-get-variables-withjavascript/
+        //
+        // http://papermashup.com/index.php?id=123&page=home
+        //
+        //      var first = getUrlVars()["id"];
+        //      var second = getUrlVars()["page"];
+        //
+        //      alert(first);
+        //      alert(second);
+        //
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+            vars[key] = value;
+        });
+        return vars;
     }
 
     </script>
