@@ -375,7 +375,14 @@ sub make_user_row {
     # Line Number
     my $row;
     my $seperator = qq{<span class="seperator">$cfg{html}{seperator}</span>};
-    my $url = qq{<a href="http://maps.google.com/maps?q=$lat,$lon" target="_blank">Map</a>};
+    
+    # Where does Maps link go?
+    #
+    # Originally to Google Maps
+    # my $url = qq{<a href="http://maps.google.com/maps?q=$lat,$lon" target="_blank">Map</a>};
+    # Now to our own map
+    my $url = qq{<a href="mapcluster.html?userid=$id">Map</a>};
+
 
     if ($cfg{html}{liststyle} eq "div") {
         # Create row with <div> containers
