@@ -824,7 +824,7 @@ sub read_text {
     do_log(2, $func, '', $file);
 
     my $fh;
-    if (! open($fh, "<", $file)) {
+    if (! open($fh, "<:encoding(UTF-8)", $file)) {
         do_log(1, $func, "open", "Could not open file '$file' $!");
         return;
     }
@@ -849,7 +849,7 @@ sub read_binary {
     do_log(2, $func, '', $file);
 
     my $fh;
-    if (! open($fh, "<", $file)) {
+    if (! open($fh, "<:raw", $file)) {
         do_log(1, $func, "open", "Could not open file '$file' $!");
         return;
     }
@@ -910,7 +910,7 @@ sub ftp_put {
 
     # Open file handle for variable and write to FTP server
     my $fh;
-    if (! open($fh, "<", $gutref)) {
+    if (! open($fh, "<:raw", $gutref)) {
         do_log(1, $func, "open", "Could not open filehandle for \$gut $!");
         return;
     }
