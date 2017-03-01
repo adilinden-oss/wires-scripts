@@ -192,20 +192,39 @@ password    = topsecretpassword
 #
 # trim          number of lines to keep in trim(med) log output
 # dir           local directory to look for template files
+# binary        file extensions exempt from substitutions
+# mapstyle      how to display markers on the map
+#       plain       plain map
+#       cluster     cluster markers
+# maplink       how to link coordinates in heardlog
+#       plain       link to plain map
+#       cluster     link to cluster markers
+#       google      link to Google maps URL instead of own map
+#       none        don't display map link
 # liststyle     how to construct the lists, valid values:
-#       br      list wrappen in <div> using <br> with each line
-#       div     table styled using <div> containers
-#       simple  simple line breaks using <br> html tags
-#       table   table styled using <table> tags
-#       ul      simple unordered list using <ul> and <li> tags
+#       br          list wrappen in <div> using <br> with each line
+#       div         table styled using <div> containers
+#       simple      simple line breaks using <br> html tags
+#       table       table styled using <table> tags
+#       ul          simple unordered list using <ul> and <li> tags
 # seperator     string used as seperator between elements when using
 #               list styles 'br' or 'ul'
 #
 [html]
 trim        = 6
 dir         = templates
+binary      = png gif jpg jpeg pdf js
+mapstyle    = plain
+maplink     = plain
 liststyle   = table
 seperator   = &nbsp;
+
+# API Key for Google Maps
+#
+# See https://developers.google.com/maps/documentation/javascript/get-api-key
+#
+[google]
+apikey      = google-maps-api-key
 
 # Script paramters, command line takes precedence
 #
