@@ -1,5 +1,7 @@
 /*
- *  Create a map with markers
+ * Create a Google Map with Markers
+ *
+ * by Adi Linden <adi@adis.ca>
  *
  * Uses the following:
  *
@@ -8,6 +10,17 @@
  *   - MarkerClusterer for Google Maps v3
  *     https://github.com/googlemaps/v3-utility-library/tree/master/markerclusterer
  *     https://developers.google.com/maps/documentation/javascript/marker-clustering
+ *
+ * Usage information:
+ *
+ *   The following http GET variables are supported:
+ *
+ *     cluster      if 'true' enables the MarkerClusterer features.
+ *     userid       if a userid is provided and matched in markers map
+ *                  is zoomed into the matching marker.
+ *     zoom         if zoom level is provided in addition to a userid
+ *                  map is zoomed to the specified level, else maxZoom
+ *                  applies.
  */
 
 // Define maximum zoom level for clusterer to cluster and zoom on click
