@@ -381,13 +381,9 @@ sub make_user_row {
     my $seperator = qq{<span class="seperator">$cfg{html}{seperator}</span>};
     
     my $url = '&nbsp;';
-    if ($cfg{html}{maplink} eq "plain") {
-        # Plain map
-        $url = qq{<a href="map.html?style=plain&userid=$id">Map</a>};
-    }
-    elsif ($cfg{html}{maplink} eq "cluster") {
-        # Marker clusterer
-        $url = qq{<a href="map.html?style=cluster&userid=$id">Map</a>};
+    if ($cfg{html}{maplink} =~ /^(plain|plainage|cluster)$/) {
+        # Plain map & marker clusterer
+        $url = qq{<a href="map.html?style=$cfg{html}{maplink}&userid=$id">Map</a>};
     }
     elsif ($cfg{html}{maplink} eq "google") {
         # Google URL
@@ -1182,10 +1178,12 @@ password    = $cfg{ftp}{password}
 # binary        file extensions exempt from substitutions
 # mapstyle      how to display markers on the map
 #       plain       plain map
+#       plainage    plain map with aging panel
 #       cluster     cluster markers
 # maplink       how to link coordinates in heardlog
-#       plain       link to plain map
-#       cluster     link to cluster markers
+#       plain       plain map
+#       plainage    plain map with aging panel
+#       cluster     cluster markers
 #       google      link to Google maps URL instead of own map
 #       none        don't display map link
 # liststyle     how to construct the lists, valid values:

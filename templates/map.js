@@ -77,27 +77,20 @@ function initMap() {
     setMarker(map, info, bound, mapData.node);
     setMarkers(map, info, bound, mapData.user);
 
-    // Is clusterer requested via GET variable?
+    // Style requested via GET variable
     var mapStyle = String(getUrlVars()["style"]);
-
-    if (mapStyle != null && mapStyle == "cluster") {
-        
-        // Add marker clusterer to manage the markers.
-        var markerCluster = new MarkerClusterer(map, markers, {
-            imagePath: 'mapcluster.d/m',
-            maxZoom: maxZoom,
-        });
-
-        // Limit marker clusterer zoom on click
-        google.maps.event.addListener(markerCluster, 'clusterclick', function(cluster){
-            if (markerCluster.isZoomOnClick()) {
-                map.fitBounds(cluster.getBounds());
-                if (map.getZoom() > markerCluster.getMaxZoom()) map.setZoom(markerCluster.getMaxZoom()+1);
-            }
-        });
-
-        // Hide the panel, clusterer declutters instead
-        document.getElementById('panel').style.visibility='hidden';
+    if (mapStyle == null) { mapStyle = 'plainage'; }
+    switch(mapStyle) {
+        case 'cluster':
+            // Use marker clusterer
+            useClusterer(map);
+            // Hide the panel, clusterer declutters instead
+            document.getElementById('panel').style.visibility='hidden';
+            break;
+        case 'plain':
+            // Hide the panel, clusterer declutters instead
+            document.getElementById('panel').style.visibility='hidden';
+            break;
     }
 
     // Limit how far out can be zoomed
@@ -107,6 +100,22 @@ function initMap() {
 
     // Adjust center and zoom level
     zoomCall(map, bound);
+}
+
+function useClusterer(map) {
+    // Add marker clusterer to manage the markers.
+    var markerCluster = new MarkerClusterer(map, markers, {
+        imagePath: 'mapcluster.d/m',
+        maxZoom: maxZoom,
+    });
+
+    // Limit marker clusterer zoom on click
+    google.maps.event.addListener(markerCluster, 'clusterclick', function(cluster){
+        if (markerCluster.isZoomOnClick()) {
+            map.fitBounds(cluster.getBounds());
+            if (map.getZoom() > markerCluster.getMaxZoom()) map.setZoom(markerCluster.getMaxZoom()+1);
+        }
+    });
 }
 
 function setMarker(map, info, bound, pin) {

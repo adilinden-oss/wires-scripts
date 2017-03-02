@@ -195,10 +195,12 @@ password    = topsecretpassword
 # binary        file extensions exempt from substitutions
 # mapstyle      how to display markers on the map
 #       plain       plain map
+#       plainage    plain map with aging panel
 #       cluster     cluster markers
 # maplink       how to link coordinates in heardlog
-#       plain       link to plain map
-#       cluster     link to cluster markers
+#       plain       plain map
+#       plainage    plain map with aging panel
+#       cluster     cluster markers
 #       google      link to Google maps URL instead of own map
 #       none        don't display map link
 # liststyle     how to construct the lists, valid values:
