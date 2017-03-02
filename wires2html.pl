@@ -58,7 +58,7 @@ use Net::FTP;
 
 # Script information
 my %script = (
-    version     => '1.4',
+    version     => '1.4-dev',
     wiresx      => '1.120',
     name        => 'wires2html.pl',
     author      => 'Adi Linden <adi@adis.ca>',
@@ -316,7 +316,7 @@ sub handle_wireslog {
             }
 
             # Populate mapdata temlate variable
-            $template{mapdatauser} .= "      { ";
+            $template{mapdatauser} .= "{ ";
             $template{mapdatauser} .= qq{lat: "$lat", };
             $template{mapdatauser} .= qq{lng: "$lon", };
             $template{mapdatauser} .= qq{distance: "$dist", };

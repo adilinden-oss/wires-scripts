@@ -1,0 +1,4 @@
+var mapData = {
+"node": {{mapdatanode}},
+"user": [{{mapdatauser}}],
+}

@@ -66,7 +66,7 @@ function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         zoom: 5,
-        center: new google.maps.LatLng(nodeInfo.lat, nodeInfo.lng),
+        center: new google.maps.LatLng(mapData.node.lat, mapData.node.lng),
     });
 
     // Define variables used by each marker
@@ -74,8 +74,8 @@ function initMap() {
     var bound = new google.maps.LatLngBounds();
 
     // Create marker array
-    setMarker(map, info, bound, nodeInfo);
-    setMarkers(map, info, bound, heardInfo);
+    setMarker(map, info, bound, mapData.node);
+    setMarkers(map, info, bound, mapData.user);
 
     // Is clusterer requested via GET variable?
     var mapStyle = String(getUrlVars()["style"]);

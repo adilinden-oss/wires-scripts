@@ -63,16 +63,8 @@
         </div>
         <div id="map"></div>
     </div>
-    <script>
-
-    // Define lat, long and other info for markers
-    var nodeInfo = {{mapdatanode}};
-    var heardInfo = [
-        {{mapdatauser}}
-    ];
-
-    </script>
-    <script type="text/javascript" src="mapcluster.d/markerclusterer.js"></script>
+    <script src="map-data.json"></script>
+    <script src="mapcluster.d/markerclusterer.js"></script>
     <script src="map.js"></script>
     <script async defer src="https://maps.googleapis.com/maps/api/js?key={{apikey}}&callback=initMap"></script>
 </body
