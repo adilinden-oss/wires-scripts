@@ -47,7 +47,7 @@ my $use_socket_timeout = 1;
 
 # Script information
 my %script = (
-    version     => '1.3',
+    version     => '1.3-dev',
     wiresx      => '1.120',
     name        => 'wires2aprs.pl',
     author      => 'Adi Linden <adi@adis.ca>',
@@ -165,7 +165,6 @@ while (1) {
 
 sub handle_wireslog {
     my $func = "handle_wireslog";
-    do_log(2, $func, "run at", scalar localtime());
 
     # Open log
     #
@@ -321,6 +320,7 @@ sub handle_wireslog {
             do_beacon(@$wxll[0], $aprslat, $aprslon);
         }
     }
+    do_log(2, $func, "run at", scalar localtime());
 }
 
 sub do_beacon {
